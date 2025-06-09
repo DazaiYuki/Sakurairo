@@ -801,13 +801,13 @@ function get_post_views($post_id)
     if ((function_exists('wp_statistics_pages')) && (iro_opt('statistics_api') == 'wp_statistics')) {
         // 使用 WP-Statistics 插件获取浏览量
         $views = wp_statistics_pages('total', 'uri', $post_id);
-        return empty($views) ? 0 : $views;
+        return empty($views) ? 0 : intval($views);
     } else {
         // 使用文章自定义字段获取浏览量
         $views = get_post_meta($post_id, 'views', true);
         // 格式化浏览量
         $views = restyle_text($views);
-        return empty($views) ? 0 : $views;
+        return empty($views) ? 0 : intval($views);
     }
 }
 
