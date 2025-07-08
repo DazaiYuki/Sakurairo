@@ -162,21 +162,89 @@ function comment_captcha(){
   if (is_user_logged_in()) { //登录后不需要验证
     return true;
   }
-  if (!(isset($_POST['captcha']) && !empty(trim($_POST['captcha'])))) {
-      return siren_ajax_comment_err(__('Please fill in the captcha answer','sakurairo'));
-  }
-  if (!isset($_POST['timestamp']) || !isset($_POST['id']) || !preg_match('/^[\w$.\/]+$/', $_POST['id']) || !ctype_digit($_POST['timestamp'])) {
-      return siren_ajax_comment_err(__('Have you modified the captcha code data? Or refresh the captcha and try again?','sakurairo'));
-  }
-  include_once( get_template_directory() . '/inc/classes/Captcha.php');
-  $img = new Sakura\API\Captcha;
-  $check = $img->check_captcha($_POST['captcha'], $_POST['timestamp'], $_POST['id']);
-  if ($check['code'] == 5) {
+  
+  $captcha_type = iro_opt('captcha_select');
+  
+  if ($captcha_type === 'iro_captcha' && iro_opt('pca_captcha')) {
+      if (!(isset($_POST['captcha']) && !empty(trim($_POST['captcha'])))) {
+          return siren_ajax_comment_err(__('Please fill in the captcha answer','sakurairo'));
+      }
+      if (!isset($_POST['timestamp']) || !isset($_POST['id']) || !preg_match('/^[\w$.\/]+$/', $_POST['id']) || !ctype_digit($_POST['timestamp'])) {
+          return siren_ajax_comment_err(__('Have you modified the captcha code data? Or refresh the captcha and try again?','sakurairo'));
+      }
+      include_once( get_template_directory() . '/inc/classes/Captcha.php');
+      $img = new Sakura\API\Captcha;
+      $check = $img->check_captcha($_POST['captcha'], $_POST['timestamp'], $_POST['id']);
+      if ($check['code'] == 5) {
+          return true;
+      }
+      return siren_ajax_comment_err(__('Please fill in the correct captcha answer','sakurairo'));
+      
+  } elseif ($captcha_type === 'recaptcha_v2' && !empty(iro_opt("recaptcha_v2_site_key")) && !empty(iro_opt("recaptcha_v2_secret_key"))) {
+      if (!isset($_POST['g-recaptcha-response']) || empty($_POST['g-recaptcha-response'])) {
+          return siren_ajax_comment_err(__('Please complete the reCAPTCHA verification','sakurairo'));
+      }
+      include_once( get_template_directory() . '/inc/classes/ReCaptchaV2.php');
+      $recaptcha = new Sakura\API\ReCaptchaV2;
+      $response = $recaptcha->verify($_POST['g-recaptcha-response'], get_the_user_ip());
+      if (!$response['success']) {
+          return siren_ajax_comment_err($response['error']);
+      }
+      return true;
+      
+  } elseif ($captcha_type === 'recaptcha_v3' && !empty(iro_opt("recaptcha_v3_site_key")) && !empty(iro_opt("recaptcha_v3_secret_key"))) {
+      if (!isset($_POST['g-recaptcha-response']) || empty($_POST['g-recaptcha-response'])) {
+          return siren_ajax_comment_err(__('reCAPTCHA v3 token is missing','sakurairo'));
+      }
+      include_once( get_template_directory() . '/inc/classes/ReCaptchaV3.php');
+      $recaptcha = new Sakura\API\ReCaptchaV3;
+      $response = $recaptcha->verify($_POST['g-recaptcha-response'], get_the_user_ip(), 'comment');
+      if (!$response['success']) {
+          return siren_ajax_comment_err($response['error']);
+      }
+      return true;
+      
+  } elseif ($captcha_type === 'hcaptcha' && !empty(iro_opt("hcaptcha_site_key")) && !empty(iro_opt("hcaptcha_secret_key"))) {
+      if (!isset($_POST['h-captcha-response']) || empty($_POST['h-captcha-response'])) {
+          return siren_ajax_comment_err(__('Please complete the hCaptcha verification','sakurairo'));
+      }
+      include_once( get_template_directory() . '/inc/classes/HCaptcha.php');
+      $hcaptcha = new Sakura\API\HCaptcha;
+      $response = $hcaptcha->verify($_POST['h-captcha-response'], get_the_user_ip());
+      if (!$response['success']) {
+          return siren_ajax_comment_err($response['error']);
+      }
+      return true;
+      
+  } elseif ($captcha_type === 'turnstile' && !empty(iro_opt("turnstile_site_key")) && !empty(iro_opt("turnstile_secret_key"))) {
+      if (!isset($_POST['cf-turnstile-response']) || empty($_POST['cf-turnstile-response'])) {
+          return siren_ajax_comment_err(__('Please complete the Turnstile verification','sakurairo'));
+      }
+      include_once( get_template_directory() . '/inc/classes/TurnstileCaptcha.php');
+      $turnstile = new Sakura\API\TurnstileCaptcha;
+      $response = $turnstile->verify($_POST['cf-turnstile-response'], get_the_user_ip());
+      if (!$response['success']) {
+          return siren_ajax_comment_err($response['error']);
+      }
+      return true;
+      
+  } elseif ($captcha_type === 'vaptcha' && !empty(iro_opt("vaptcha_vid")) && !empty(iro_opt("vaptcha_key"))) {
+      if (!isset($_POST['vaptcha_token']) || empty($_POST['vaptcha_token'])) {
+          return siren_ajax_comment_err(__('Please complete the Vaptcha verification','sakurairo'));
+      }
+      include_once( get_template_directory() . '/inc/classes/Vaptcha.php');
+      $vaptcha = new Sakura\API\Vaptcha;
+      $response = $vaptcha->checkVaptcha($_POST['vaptcha_server'], $_POST['vaptcha_token'], get_the_user_ip());
+      if (!$response->success || $response->success !== 1 || $response->score < 70) {
+          return siren_ajax_comment_err(__('Vaptcha verification failed','sakurairo'));
+      }
       return true;
   }
-  return siren_ajax_comment_err(__('Please fill in the correct captcha answer','sakurairo'));
+  
+  return true; // No captcha configured
 }
-if(iro_opt('pca_captcha')) add_action('pre_comment_on_post', 'comment_captcha');
+// Apply captcha check if any captcha is enabled
+if(iro_opt('captcha_select') !== 'off') add_action('pre_comment_on_post', 'comment_captcha');
 
 // 评论提交
 if(!function_exists('siren_ajax_comment_callback')) {

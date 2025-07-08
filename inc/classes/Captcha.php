@@ -25,18 +25,57 @@ class Captcha
      */
     private function create_captcha(): void
     {
-        $n1 = mt_rand(10, 99);
-        $n2 = mt_rand(10, 99);
-        if (mt_rand(0, 1)) {
-            //加法
-            $this->captchaText = "{$n1}+{$n2}=?";
-            $this->captchaResult = $n1 + $n2;
-        } else {
-            //减法(避免负数)
-            $min = min($n1, $n2);
-            $max = max($n1, $n2);
-            $this->captchaText = "{$max}-{$min}=?";
-            $this->captchaResult = $max - $min;
+        $questionType = mt_rand(0, 4); // Expand to 5 different question types
+        
+        switch ($questionType) {
+            case 0:
+                // Addition
+                $n1 = mt_rand(10, 99);
+                $n2 = mt_rand(10, 99);
+                $this->captchaText = "{$n1}+{$n2}=?";
+                $this->captchaResult = $n1 + $n2;
+                break;
+                
+            case 1:
+                // Subtraction (避免负数)
+                $n1 = mt_rand(10, 99);
+                $n2 = mt_rand(10, 99);
+                $min = min($n1, $n2);
+                $max = max($n1, $n2);
+                $this->captchaText = "{$max}-{$min}=?";
+                $this->captchaResult = $max - $min;
+                break;
+                
+            case 2:
+                // Simple multiplication
+                $n1 = mt_rand(2, 12);
+                $n2 = mt_rand(2, 12);
+                $this->captchaText = "{$n1}×{$n2}=?";
+                $this->captchaResult = $n1 * $n2;
+                break;
+                
+            case 3:
+                // Number sequence
+                $start = mt_rand(5, 20);
+                $step = mt_rand(2, 5);
+                $this->captchaText = "{$start}," . ($start + $step) . "," . ($start + 2 * $step) . ",?";
+                $this->captchaResult = $start + 3 * $step;
+                break;
+                
+            case 4:
+                // Simple logic questions
+                $logicQuestions = [
+                    ['text' => __('How many days in a week?', 'sakurairo'), 'answer' => 7],
+                    ['text' => __('How many hours in a day?', 'sakurairo'), 'answer' => 24],
+                    ['text' => __('How many months in a year?', 'sakurairo'), 'answer' => 12],
+                    ['text' => __('How many minutes in an hour?', 'sakurairo'), 'answer' => 60],
+                    ['text' => __('2+2×2=?', 'sakurairo'), 'answer' => 6],
+                    ['text' => __('What is the next prime after 5?', 'sakurairo'), 'answer' => 7],
+                ];
+                $question = $logicQuestions[array_rand($logicQuestions)];
+                $this->captchaText = $question['text'];
+                $this->captchaResult = $question['answer'];
+                break;
         }
     }
 
@@ -172,8 +211,8 @@ class Captcha
         if (!isset($timestamp) || !isset($id) || !preg_match('/^[\w$.\/]+$/', $id) || !ctype_digit((string)$timestamp)) {
             $code = 3;
             $msg = __('Bad Request.',"sakurairo");//非法请求
-        } elseif (!preg_match('/^(?:(?!199)(?:[1-9]\d?|1\d{2}|0))$/', $captcha)) {
-            //匹配非0 ~ 198
+        } elseif (!preg_match('/^[0-9]+$/', $captcha) || (int)$captcha < 0 || (int)$captcha > 9999) {
+            // Allow numbers from 0 to 9999 to accommodate multiplication results
             $code = 3;
             $msg = __("Look like you forgot to enter the captcha.","sakurairo");//请输入正确的验证码!
         } elseif ($timestamp < $timeThreshold) {

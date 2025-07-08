@@ -3037,6 +3037,187 @@ if (iro_opt('captcha_select') === 'iro_captcha') {
 
     }
     add_filter('authenticate', 'checkVaptchaAction', 20, 3);
+} elseif (iro_opt('captcha_select') === 'recaptcha_v2' && (!empty(iro_opt("recaptcha_v2_site_key")) && !empty(iro_opt("recaptcha_v2_secret_key")))) {
+    // Google reCAPTCHA v2 implementation
+    function recaptcha_v2_init()
+    {
+        include_once('inc/classes/ReCaptchaV2.php');
+        $recaptcha = new Sakura\API\ReCaptchaV2;
+        echo $recaptcha->html();
+        echo $recaptcha->script();
+    }
+    add_action('login_form', 'recaptcha_v2_init');
+    add_action('register_form', 'recaptcha_v2_init');
+    add_action('lostpassword_form', 'recaptcha_v2_init');
+
+    function check_recaptcha_v2_action($user)
+    {
+        if (empty($_POST)) {
+            return new WP_Error();
+        }
+        if (!isset($_POST['g-recaptcha-response']) || empty($_POST['g-recaptcha-response'])) {
+            return new WP_Error('prooffail', '<strong>错误</strong>：请完成reCAPTCHA验证');
+        }
+        
+        include_once('inc/classes/ReCaptchaV2.php');
+        $recaptcha = new Sakura\API\ReCaptchaV2;
+        $response = $recaptcha->verify($_POST['g-recaptcha-response'], get_the_user_ip());
+        
+        if (!$response['success']) {
+            return new WP_Error('prooffail', '<strong>错误</strong>：' . $response['error']);
+        }
+        
+        return $user;
+    }
+    add_filter('authenticate', 'check_recaptcha_v2_action', 20, 3);
+    add_filter('registration_errors', function($errors, $sanitized_user_login, $user_email) {
+        $result = check_recaptcha_v2_action(null);
+        if (is_wp_error($result)) {
+            $errors->add('recaptcha_error', $result->get_error_message());
+        }
+        return $errors;
+    }, 2, 3);
+
+} elseif (iro_opt('captcha_select') === 'recaptcha_v3' && (!empty(iro_opt("recaptcha_v3_site_key")) && !empty(iro_opt("recaptcha_v3_secret_key")))) {
+    // Google reCAPTCHA v3 implementation
+    function recaptcha_v3_init()
+    {
+        include_once('inc/classes/ReCaptchaV3.php');
+        $recaptcha = new Sakura\API\ReCaptchaV3;
+        echo $recaptcha->html();
+        echo $recaptcha->script('login');
+    }
+    add_action('login_form', 'recaptcha_v3_init');
+    add_action('register_form', function() {
+        include_once('inc/classes/ReCaptchaV3.php');
+        $recaptcha = new Sakura\API\ReCaptchaV3;
+        echo $recaptcha->html();
+        echo $recaptcha->script('register');
+    });
+    add_action('lostpassword_form', function() {
+        include_once('inc/classes/ReCaptchaV3.php');
+        $recaptcha = new Sakura\API\ReCaptchaV3;
+        echo $recaptcha->html();
+        echo $recaptcha->script('lostpassword');
+    });
+
+    function check_recaptcha_v3_action($user)
+    {
+        if (empty($_POST)) {
+            return new WP_Error();
+        }
+        if (!isset($_POST['g-recaptcha-response']) || empty($_POST['g-recaptcha-response'])) {
+            return new WP_Error('prooffail', '<strong>错误</strong>：reCAPTCHA v3令牌缺失');
+        }
+        
+        include_once('inc/classes/ReCaptchaV3.php');
+        $recaptcha = new Sakura\API\ReCaptchaV3;
+        $response = $recaptcha->verify($_POST['g-recaptcha-response'], get_the_user_ip(), 'login');
+        
+        if (!$response['success']) {
+            return new WP_Error('prooffail', '<strong>错误</strong>：' . $response['error']);
+        }
+        
+        return $user;
+    }
+    add_filter('authenticate', 'check_recaptcha_v3_action', 20, 3);
+    add_filter('registration_errors', function($errors, $sanitized_user_login, $user_email) {
+        if (!isset($_POST['g-recaptcha-response']) || empty($_POST['g-recaptcha-response'])) {
+            $errors->add('recaptcha_error', '<strong>错误</strong>：reCAPTCHA v3令牌缺失');
+            return $errors;
+        }
+        
+        include_once('inc/classes/ReCaptchaV3.php');
+        $recaptcha = new Sakura\API\ReCaptchaV3;
+        $response = $recaptcha->verify($_POST['g-recaptcha-response'], get_the_user_ip(), 'register');
+        
+        if (!$response['success']) {
+            $errors->add('recaptcha_error', '<strong>错误</strong>：' . $response['error']);
+        }
+        return $errors;
+    }, 2, 3);
+
+} elseif (iro_opt('captcha_select') === 'hcaptcha' && (!empty(iro_opt("hcaptcha_site_key")) && !empty(iro_opt("hcaptcha_secret_key")))) {
+    // hCaptcha implementation
+    function hcaptcha_init()
+    {
+        include_once('inc/classes/HCaptcha.php');
+        $hcaptcha = new Sakura\API\HCaptcha;
+        echo $hcaptcha->html();
+        echo $hcaptcha->script();
+    }
+    add_action('login_form', 'hcaptcha_init');
+    add_action('register_form', 'hcaptcha_init');
+    add_action('lostpassword_form', 'hcaptcha_init');
+
+    function check_hcaptcha_action($user)
+    {
+        if (empty($_POST)) {
+            return new WP_Error();
+        }
+        if (!isset($_POST['h-captcha-response']) || empty($_POST['h-captcha-response'])) {
+            return new WP_Error('prooffail', '<strong>错误</strong>：请完成hCaptcha验证');
+        }
+        
+        include_once('inc/classes/HCaptcha.php');
+        $hcaptcha = new Sakura\API\HCaptcha;
+        $response = $hcaptcha->verify($_POST['h-captcha-response'], get_the_user_ip());
+        
+        if (!$response['success']) {
+            return new WP_Error('prooffail', '<strong>错误</strong>：' . $response['error']);
+        }
+        
+        return $user;
+    }
+    add_filter('authenticate', 'check_hcaptcha_action', 20, 3);
+    add_filter('registration_errors', function($errors, $sanitized_user_login, $user_email) {
+        $result = check_hcaptcha_action(null);
+        if (is_wp_error($result)) {
+            $errors->add('hcaptcha_error', $result->get_error_message());
+        }
+        return $errors;
+    }, 2, 3);
+
+} elseif (iro_opt('captcha_select') === 'turnstile' && (!empty(iro_opt("turnstile_site_key")) && !empty(iro_opt("turnstile_secret_key")))) {
+    // Cloudflare Turnstile implementation
+    function turnstile_init()
+    {
+        include_once('inc/classes/TurnstileCaptcha.php');
+        $turnstile = new Sakura\API\TurnstileCaptcha;
+        echo $turnstile->html();
+        echo $turnstile->script();
+    }
+    add_action('login_form', 'turnstile_init');
+    add_action('register_form', 'turnstile_init');
+    add_action('lostpassword_form', 'turnstile_init');
+
+    function check_turnstile_action($user)
+    {
+        if (empty($_POST)) {
+            return new WP_Error();
+        }
+        if (!isset($_POST['cf-turnstile-response']) || empty($_POST['cf-turnstile-response'])) {
+            return new WP_Error('prooffail', '<strong>错误</strong>：请完成Turnstile验证');
+        }
+        
+        include_once('inc/classes/TurnstileCaptcha.php');
+        $turnstile = new Sakura\API\TurnstileCaptcha;
+        $response = $turnstile->verify($_POST['cf-turnstile-response'], get_the_user_ip());
+        
+        if (!$response['success']) {
+            return new WP_Error('prooffail', '<strong>错误</strong>：' . $response['error']);
+        }
+        
+        return $user;
+    }
+    add_filter('authenticate', 'check_turnstile_action', 20, 3);
+    add_filter('registration_errors', function($errors, $sanitized_user_login, $user_email) {
+        $result = check_turnstile_action(null);
+        if (is_wp_error($result)) {
+            $errors->add('turnstile_error', $result->get_error_message());
+        }
+        return $errors;
+    }, 2, 3);
 }
 
 // 获取访客 IP

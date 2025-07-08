@@ -3303,7 +3303,11 @@ $prefix = 'iro_options';
         'options' => array(
           'off' => __('Off','sakurairo_csf'),
           'iro_captcha' => __('Theme Built in Captcha','sakurairo_csf'),
-          'vaptcha' => __('Vaptcha','sakurairo_csf')
+          'vaptcha' => __('Vaptcha','sakurairo_csf'),
+          'recaptcha_v2' => __('Google reCAPTCHA v2','sakurairo_csf'),
+          'recaptcha_v3' => __('Google reCAPTCHA v3','sakurairo_csf'),
+          'hcaptcha' => __('hCaptcha','sakurairo_csf'),
+          'turnstile' => __('Cloudflare Turnstile','sakurairo_csf')
         ),
         'default' => 'off',
       ),
@@ -3338,6 +3342,135 @@ $prefix = 'iro_options';
           '6' => __(6,'sakurairo_csf'),
         ),
         'default' => 1,
+      ),
+
+      // Google reCAPTCHA v2 options
+      array(
+        'id' => 'recaptcha_v2_site_key',
+        'type' => 'text',
+        'title' => __('reCAPTCHA v2 Site Key','sakurairo_csf'),
+        'dependency' => array( 'captcha_select', '==', 'recaptcha_v2', '', 'true' ),
+        'desc' => __('Enter your Google reCAPTCHA v2 site key','sakurairo_csf'),
+      ),
+
+      array(
+        'id' => 'recaptcha_v2_secret_key',
+        'type' => 'text',
+        'title' => __('reCAPTCHA v2 Secret Key','sakurairo_csf'),
+        'dependency' => array( 'captcha_select', '==', 'recaptcha_v2', '', 'true' ),
+        'desc' => __('Enter your Google reCAPTCHA v2 secret key','sakurairo_csf'),
+      ),
+
+      // Google reCAPTCHA v3 options
+      array(
+        'id' => 'recaptcha_v3_site_key',
+        'type' => 'text',
+        'title' => __('reCAPTCHA v3 Site Key','sakurairo_csf'),
+        'dependency' => array( 'captcha_select', '==', 'recaptcha_v3', '', 'true' ),
+        'desc' => __('Enter your Google reCAPTCHA v3 site key','sakurairo_csf'),
+      ),
+
+      array(
+        'id' => 'recaptcha_v3_secret_key',
+        'type' => 'text',
+        'title' => __('reCAPTCHA v3 Secret Key','sakurairo_csf'),
+        'dependency' => array( 'captcha_select', '==', 'recaptcha_v3', '', 'true' ),
+        'desc' => __('Enter your Google reCAPTCHA v3 secret key','sakurairo_csf'),
+      ),
+
+      array(
+        'id' => 'recaptcha_v3_min_score',
+        'type' => 'slider',
+        'title' => __('reCAPTCHA v3 Minimum Score','sakurairo_csf'),
+        'dependency' => array( 'captcha_select', '==', 'recaptcha_v3', '', 'true' ),
+        'desc' => __('Set the minimum score threshold (0.0 to 1.0). Higher values are more restrictive.','sakurairo_csf'),
+        'min' => 0.0,
+        'max' => 1.0,
+        'step' => 0.1,
+        'default' => 0.5,
+      ),
+
+      // hCaptcha options
+      array(
+        'id' => 'hcaptcha_site_key',
+        'type' => 'text',
+        'title' => __('hCaptcha Site Key','sakurairo_csf'),
+        'dependency' => array( 'captcha_select', '==', 'hcaptcha', '', 'true' ),
+        'desc' => __('Enter your hCaptcha site key','sakurairo_csf'),
+      ),
+
+      array(
+        'id' => 'hcaptcha_secret_key',
+        'type' => 'text',
+        'title' => __('hCaptcha Secret Key','sakurairo_csf'),
+        'dependency' => array( 'captcha_select', '==', 'hcaptcha', '', 'true' ),
+        'desc' => __('Enter your hCaptcha secret key','sakurairo_csf'),
+      ),
+
+      array(
+        'id' => 'hcaptcha_theme',
+        'type' => 'select',
+        'title' => __('hCaptcha Theme','sakurairo_csf'),
+        'dependency' => array( 'captcha_select', '==', 'hcaptcha', '', 'true' ),
+        'options' => array(
+          'light' => __('Light','sakurairo_csf'),
+          'dark' => __('Dark','sakurairo_csf'),
+        ),
+        'default' => 'light',
+      ),
+
+      array(
+        'id' => 'hcaptcha_size',
+        'type' => 'select',
+        'title' => __('hCaptcha Size','sakurairo_csf'),
+        'dependency' => array( 'captcha_select', '==', 'hcaptcha', '', 'true' ),
+        'options' => array(
+          'normal' => __('Normal','sakurairo_csf'),
+          'compact' => __('Compact','sakurairo_csf'),
+        ),
+        'default' => 'normal',
+      ),
+
+      // Cloudflare Turnstile options
+      array(
+        'id' => 'turnstile_site_key',
+        'type' => 'text',
+        'title' => __('Turnstile Site Key','sakurairo_csf'),
+        'dependency' => array( 'captcha_select', '==', 'turnstile', '', 'true' ),
+        'desc' => __('Enter your Cloudflare Turnstile site key','sakurairo_csf'),
+      ),
+
+      array(
+        'id' => 'turnstile_secret_key',
+        'type' => 'text',
+        'title' => __('Turnstile Secret Key','sakurairo_csf'),
+        'dependency' => array( 'captcha_select', '==', 'turnstile', '', 'true' ),
+        'desc' => __('Enter your Cloudflare Turnstile secret key','sakurairo_csf'),
+      ),
+
+      array(
+        'id' => 'turnstile_theme',
+        'type' => 'select',
+        'title' => __('Turnstile Theme','sakurairo_csf'),
+        'dependency' => array( 'captcha_select', '==', 'turnstile', '', 'true' ),
+        'options' => array(
+          'auto' => __('Auto','sakurairo_csf'),
+          'light' => __('Light','sakurairo_csf'),
+          'dark' => __('Dark','sakurairo_csf'),
+        ),
+        'default' => 'auto',
+      ),
+
+      array(
+        'id' => 'turnstile_size',
+        'type' => 'select',
+        'title' => __('Turnstile Size','sakurairo_csf'),
+        'dependency' => array( 'captcha_select', '==', 'turnstile', '', 'true' ),
+        'options' => array(
+          'normal' => __('Normal','sakurairo_csf'),
+          'compact' => __('Compact','sakurairo_csf'),
+        ),
+        'default' => 'normal',
       ),
 
       array(
