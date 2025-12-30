@@ -167,6 +167,17 @@ if (!function_exists('akina_setup')) {
 
         add_filter('pre_option_link_manager_enabled', '__return_true');
 
+        /**
+         * PJAX 兼容性：禁用 WordPress 按需加载 Block Styles
+         * 
+         * WordPress 5.8+ 默认启用 "Separate Core Block Assets"，只在页面使用某个区块时才加载该区块的 CSS。
+         * 这与 PJAX 不兼容，因为 PJAX 只替换内容区域，不替换 <head> 中的样式标签。
+         * 禁用此功能后，所有 Block Styles 会在初始页面加载时全部加载，避免 PJAX 导航后样式丢失。
+         * 
+         * @see https://make.wordpress.org/core/2021/07/01/block-styles-loading-enhancements-in-wordpress-5-8/
+         */
+        add_filter('should_load_separate_core_block_assets', '__return_false');
+
         // 优化代码
         //去除头部冗余代码
         remove_action('wp_head', 'feed_links_extra', 3);
@@ -550,10 +561,14 @@ function sakura_scripts()
         }
     }
     wp_enqueue_script('polyfills', $core_lib_basepath . '/js/polyfill.js', array(), IRO_VERSION, true);
-    // defer加载
+    
+    // defer加载 - 添加检查避免重复添加
     add_filter('script_loader_tag', function($tag, $handle) {
         if ('polyfills' === $handle) {
-            return str_replace('src', 'defer src', $tag);
+            // 检查是否已经有 defer 属性
+            if (strpos($tag, 'defer') === false) {
+                return str_replace(' src', ' defer src', $tag);
+            }
         }
         return $tag;
     }, 10, 2);
@@ -601,6 +616,35 @@ function sakura_scripts()
     }
 }
 add_action('wp_enqueue_scripts', 'sakura_scripts');
+
+/**
+ * WP-Optimize 兼容性：排除使用 Webpack code splitting 的脚本
+ * 这些脚本会动态加载 chunk 文件，如果被压缩插件移动位置会导致 chunk 加载失败
+ */
+add_filter('wp-optimize-minify-default-exclusions', function($exclusions) {
+    // 添加主题的 Webpack 打包脚本到排除列表
+    $exclusions[] = 'app.js';
+    $exclusions[] = 'page.js';
+    $exclusions[] = 'app-page.js';
+    return $exclusions;
+});
+
+// WPO Minify 脚本排除过滤器
+add_filter('wpo_minify_run_on_js', function($do_minify, $url, $handle) {
+    // 排除使用 Webpack code splitting 的主题脚本
+    $excluded_handles = array('app', 'app-page', 'page');
+    if (in_array($handle, $excluded_handles)) {
+        return false;
+    }
+    // 也通过 URL 检查
+    $excluded_files = array('app.js', 'page.js', 'app-page.js');
+    foreach ($excluded_files as $file) {
+        if (strpos($url, $file) !== false) {
+            return false;
+        }
+    }
+    return $do_minify;
+}, 10, 3);
 
 /**
  * load .php.
@@ -779,17 +823,50 @@ function set_post_views()
     if (!is_singular())
         return;
 
+    // 如果使用 WP-Statistics 插件统计，则跳过内建统计
+    if (iro_opt('statistics_api') == 'wp_statistics')
+        return;
+
+    // 排除管理员和编辑
+    if (current_user_can('edit_posts'))
+        return;
+
+    // 排除搜索引擎爬虫
+    if (isset($_SERVER['HTTP_USER_AGENT'])) {
+        $bots = array('bot', 'spider', 'crawler', 'slurp', 'googlebot', 'bingbot', 'yandex', 'baidu');
+        $ua = strtolower($_SERVER['HTTP_USER_AGENT']);
+        foreach ($bots as $bot) {
+            if (strpos($ua, $bot) !== false)
+                return;
+        }
+    }
+
     global $post;
     $post_id = intval($post->ID);
     if (!$post_id)
         return;
+
+    // Cookie 防刷：每篇文章使用独立的 cookie，24小时内只能 +1
+    $cookie_name = 'iro_viewed_' . $post_id;
+    
+    // 如果已有该文章的 cookie，说明24小时内已访问过，不再增加
+    if (isset($_COOKIE[$cookie_name]))
+        return;
+    
+    // 增加浏览量
     $views = (int) get_post_meta($post_id, 'views', true);
     if (!update_post_meta($post_id, 'views', ($views + 1))) {
         add_post_meta($post_id, 'views', 1, true);
     }
+    
+    // 设置 cookie，24小时后过期
+    // 注意：此时可能已经有输出，所以用 $_COOKIE 模拟（当前请求生效）+ setcookie（后续请求生效）
+    $_COOKIE[$cookie_name] = '1';
+    setcookie($cookie_name, '1', time() + 86400, '/');
 }
 
-add_action('get_header', 'set_post_views');
+// 使用 template_redirect 在输出之前处理，确保 cookie 能正常设置
+add_action('template_redirect', 'set_post_views');
 
 function get_post_views($post_id)
 {
@@ -801,20 +878,46 @@ function get_post_views($post_id)
     if ((function_exists('wp_statistics_pages')) && (iro_opt('statistics_api') == 'wp_statistics')) {
         // 使用 WP-Statistics 插件获取浏览量
         $views = wp_statistics_pages('total', 'uri', $post_id);
-        return empty($views) ? 0 : intval($views);
+        return empty($views) ? 0 : $views;
     } else {
         // 使用文章自定义字段获取浏览量
         $views = get_post_meta($post_id, 'views', true);
-        if(empty($views)){
-            return 0;
-        }
         // 格式化浏览量
-        return restyle_text(intval($views));
+        $views = restyle_text($views);
+        return empty($views) ? 0 : $views;
     }
 }
 
 // 引入post_metas方法
 require_once get_template_directory() . "/inc/post_metas.php";
+
+// AJAX 接口：批量获取文章热度（用于静态缓存场景下的异步加载）
+function iro_ajax_get_post_views() {
+    // 获取文章 ID 列表
+    $post_ids = isset($_GET['ids']) ? $_GET['ids'] : '';
+    if (empty($post_ids)) {
+        wp_send_json_error('No post IDs provided');
+    }
+    
+    // 解析 ID 列表（逗号分隔）
+    $ids = array_map('intval', explode(',', $post_ids));
+    $ids = array_filter($ids); // 移除无效 ID
+    
+    // 限制最多查询 50 篇文章，防止滥用
+    $ids = array_slice($ids, 0, 50);
+    
+    $result = array();
+    foreach ($ids as $id) {
+        $views = get_post_views($id);
+        $result[$id] = $views;
+    }
+    
+    // 设置短缓存头（1分钟），减轻服务器压力
+    header('Cache-Control: public, max-age=60');
+    wp_send_json_success($result);
+}
+add_action('wp_ajax_iro_get_views', 'iro_ajax_get_post_views');
+add_action('wp_ajax_nopriv_iro_get_views', 'iro_ajax_get_post_views');
 
 function is_webp(): bool
 {

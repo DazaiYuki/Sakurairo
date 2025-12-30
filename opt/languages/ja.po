@@ -1773,9 +1773,8 @@ msgid "PJAX Partial Refresh"
 msgstr "PJAX 部分更新"
 
 #: options/theme-options.php:1304
-msgid "Enabled by default, clicking to a new page will not require reloading"
-msgstr ""
-"既定で有効に設定すると、新しいページをクリックしても再読み込みは不要です"
+msgid "Enabled by default. Provides smooth page transitions without full page reload. Note: Enabling PJAX will automatically load all Gutenberg block styles upfront for compatibility."
+msgstr "既定で有効。ページ全体を再読み込みせずにスムーズなページ遷移を提供します。注意：PJAX を有効にすると、互換性のためにすべての Gutenberg ブロックスタイルが事前に読み込まれます。"
 
 #: options/theme-options.php:1311
 msgid "Resources that still need refreshing in the footer after enabling PJAX"
@@ -1816,15 +1815,19 @@ msgstr "既定で有効に設定すると、ページのスクロールはより
 msgid "Pagination Mode"
 msgstr "ページネーション モード"
 
-#: options/theme-options.php:1337
+#: options/theme-options.php:1336
+msgid "Ajax Load: Dynamically loads more posts without page reload. Page Up/Down: Traditional pagination with full page navigation."
+msgstr "AJAX 読み込み：ページを再読み込みせずに投稿を動的に読み込みます。ページアップ/ダウン：完全なページナビゲーションを使用した従来のページネーション。"
+
+#: options/theme-options.php:1339
 msgid "Ajax Load"
 msgstr "AJAX自動読み込み"
 
-#: options/theme-options.php:1338
+#: options/theme-options.php:1340
 msgid "Page Up/Down"
 msgstr "ページアップ/ダウン"
 
-#: options/theme-options.php:1346
+#: options/theme-options.php:1348
 msgid "Next Page Auto Load"
 msgstr "次のページの自動読み込み"
 

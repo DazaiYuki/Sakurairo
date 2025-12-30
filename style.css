@@ -193,7 +193,7 @@ a:hover {
   opacity: 0;
   flex-direction: column;
   content-visibility: hidden;
-  contain-intrinsic-size: auto none;
+  contain-intrinsic-size: auto 300px; /* 指定预留高度，减少 CLS */
 }
 
 .post-list-show {
@@ -1090,6 +1090,7 @@ nav .menu > li .sub-menu a {
   background-repeat: no-repeat;
   background-size: cover;
   overflow: hidden;
+  aspect-ratio: 16 / 9; /* 固定宽高比，减少 CLS */
 }
 
 .post-thumb a * {
@@ -2152,14 +2153,16 @@ nav#comments-navi {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 10px;
+  gap: 15px;
   justify-content: space-between;
 }
 
+/* 验证码靠左 */
 .comment-captcha{
   display: flex;
   height: 40px;
-  width: 30%;
+  flex-shrink: 0;
+  margin-right: auto;
 }
 
 .comment-captcha img{
@@ -2168,11 +2171,14 @@ nav#comments-navi {
 
 .siren-checkbox-label {
   position: relative;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   cursor: pointer;
   color: #555;
   font-size: 14px;
   font-weight: var(--global-font-weight);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .siren-checkbox-label input {
@@ -3445,6 +3451,52 @@ iframe {
   pointer-events: none;
 }
 
+.comment-user-avatar img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* 登录用户提交区域容器 - 分两行显示 */
+.cmt-submit-container.logged-in-submit {
+  display: block;
+  position: relative;
+  padding-left: 60px;
+}
+
+/* 登录用户头像 - 绝对定位在左下角 */
+.comment-user-avatar.logged-in-avatar {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  display: inline-block;
+  width: 48px;
+  height: 48px;
+  margin: 0;
+  pointer-events: none;
+}
+
+.comment-user-avatar.logged-in-avatar .socila-check {
+  margin: -20px 0 0 30px;
+}
+
+/* 登录用户选项区域 - 第一行，靠右 */
+.comment-checks.logged-in-checks {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 15px;
+  margin: 0 0 10px 0;
+  justify-content: flex-end;
+}
+
+/* 登录用户的form-submit - 第二行，与未登录一致 */
+.logged-in-submit .form-submit {
+  margin: 0;
+  width: 100%;
+}
+
 .comment-user-avatar .socila-check {
   display: none;
   width: 1.5em;
@@ -4615,7 +4667,7 @@ object {
   box-shadow: 0 1px 30px -4px #e8e8e8;
   background-color: rgba(255, 255, 255, 0.7);
   content-visibility: hidden;
-  contain-intrinsic-size: auto none;
+  contain-intrinsic-size: auto 150px; /* 指定预留高度，减少 CLS */
   border: 1px solid rgba(255, 255, 255, 0.8);
   width: 100%;
   float: left;

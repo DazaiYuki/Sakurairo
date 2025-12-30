@@ -1726,8 +1726,8 @@ msgid "PJAX Partial Refresh"
 msgstr "PJAX局部重新載入"
 
 #: options/theme-options.php:1304
-msgid "Enabled by default, clicking to a new page will not require reloading"
-msgstr "默認開啟，點擊新內容將不需要重新載入"
+msgid "Enabled by default. Provides smooth page transitions without full page reload. Note: Enabling PJAX will automatically load all Gutenberg block styles upfront for compatibility."
+msgstr "默認開啟。提供無需完整重新載入的平滑頁面過渡。注意：啟用 PJAX 時，將自動預載入所有古騰堡區塊樣式以確保相容性。"
 
 #: options/theme-options.php:1311
 msgid "Resources that still need refreshing in the footer after enabling PJAX"
@@ -1765,15 +1765,19 @@ msgstr "默認開啟，頁面滾動將更加平滑"
 msgid "Pagination Mode"
 msgstr "分頁模式"
 
-#: options/theme-options.php:1337
+#: options/theme-options.php:1336
+msgid "Ajax Load: Dynamically loads more posts without page reload. Page Up/Down: Traditional pagination with full page navigation."
+msgstr "AJAX 載入：無需頁面重新載入即可動態載入更多文章。上下頁：傳統分頁，透過完整頁面導航進行切換。"
+
+#: options/theme-options.php:1339
 msgid "Ajax Load"
 msgstr "Ajax載入"
 
-#: options/theme-options.php:1338
+#: options/theme-options.php:1340
 msgid "Page Up/Down"
 msgstr "上下頁"
 
-#: options/theme-options.php:1346
+#: options/theme-options.php:1348
 msgid "Next Page Auto Load"
 msgstr "下一頁自動載入"
 

@@ -1301,7 +1301,7 @@ $prefix = 'iro_options';
         'id' => 'poi_pjax',
         'type' => 'switcher',
         'title' => __('PJAX Partial Refresh','sakurairo_csf'),
-        'label' => __('Enabled by default, clicking to a new page will not require reloading','sakurairo_csf'),
+        'label' => __('Enabled by default. Provides smooth page transitions without full page reload. Note: Enabling PJAX will automatically load all Gutenberg block styles upfront for compatibility.','sakurairo_csf'),
         'default' => true
       ),
       
@@ -1333,6 +1333,7 @@ $prefix = 'iro_options';
         'id' => 'pagenav_style',
         'type' => 'radio',
         'title' => __('Pagination Mode','sakurairo_csf'),
+        'desc' => __('Ajax Load: Dynamically loads more posts without page reload. Page Up/Down: Traditional pagination with full page navigation.','sakurairo_csf'),
         'options' => array(
           'ajax' => __('Ajax Load','sakurairo_csf'),
           'np' => __('Page Up/Down','sakurairo_csf'),

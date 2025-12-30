@@ -68,6 +68,8 @@ header('X-Frame-Options: SAMEORIGIN');
 
     <link rel="preload" href="<?php echo (iro_opt('fontawesome_source','https://s4.zstatic.net/ajax/libs/font-awesome/6.7.2/css/all.min.css') ?? 'https://s4.zstatic.net/ajax/libs/font-awesome/6.7.2/css/all.min.css')?>" as="style">
     <link rel="stylesheet" href="<?php echo (iro_opt('fontawesome_source','https://s4.zstatic.net/ajax/libs/font-awesome/6.7.2/css/all.min.css') ?? 'https://s4.zstatic.net/ajax/libs/font-awesome/6.7.2/css/all.min.css')?>" type="text/css" media="all" />
+    <!-- FontAwesome font-display 优化：防止字体加载阻塞渲染 -->
+    <style>@font-face{font-family:"Font Awesome 6 Free";font-display:swap}@font-face{font-family:"Font Awesome 6 Brands";font-display:swap}@font-face{font-family:"fa-brands-400";font-display:swap}@font-face{font-family:"fa-regular-400";font-display:swap}@font-face{font-family:"fa-solid-900";font-display:swap}</style>
     
     <?php
     if (iro_opt('iro_meta')) {

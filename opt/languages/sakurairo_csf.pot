@@ -1588,7 +1588,7 @@ msgid "PJAX Partial Refresh"
 msgstr ""
 
 #: options/theme-options.php:1304
-msgid "Enabled by default, clicking to a new page will not require reloading"
+msgid "Enabled by default. Provides smooth page transitions without full page reload. Note: Enabling PJAX will automatically load all Gutenberg block styles upfront for compatibility."
 msgstr ""
 
 #: options/theme-options.php:1311
@@ -1622,15 +1622,19 @@ msgstr ""
 msgid "Pagination Mode"
 msgstr ""
 
-#: options/theme-options.php:1337
+#: options/theme-options.php:1336
+msgid "Ajax Load: Dynamically loads more posts without page reload. Page Up/Down: Traditional pagination with full page navigation."
+msgstr ""
+
+#: options/theme-options.php:1339
 msgid "Ajax Load"
 msgstr ""
 
-#: options/theme-options.php:1338
+#: options/theme-options.php:1340
 msgid "Page Up/Down"
 msgstr ""
 
-#: options/theme-options.php:1346
+#: options/theme-options.php:1348
 msgid "Next Page Auto Load"
 msgstr ""
 
