@@ -149,9 +149,9 @@ function get_smilies_panel() {
                         <input type="hidden" name="id" value="' . htmlspecialchars($test['id'], ENT_QUOTES, 'UTF-8') . '">
                     </label>
                 <script>
-                    var captchaHideTimeout = null;
-                    var captchaField = document.getElementById("captcha");
-                    var captchaImg = document.getElementById("captchaimg");
+                    let captchaHideTimeout = null;
+                    const captchaField = document.getElementById("captcha");
+                    const captchaImg = document.getElementById("captchaimg");
                     function showCaptcha() {
                         captchaField.setAttribute("placeholder", "");
                         if (captchaHideTimeout) { clearTimeout(captchaHideTimeout); captchaHideTimeout = null; }

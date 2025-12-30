@@ -199,7 +199,7 @@ a:hover {
   box-shadow: 0 1px 30px -4px #e8e8e8;
   opacity: 0;
   flex-direction: column;
-  content-visibility: hidden;
+  visibility: hidden; /* 初始状态隐藏，等待动画触发 */
   contain-intrinsic-size: auto 300px; /* 指定预留高度，减少 CLS */
   /* GPU acceleration for smooth animations */
   -webkit-transform: translateZ(0);
@@ -213,6 +213,7 @@ a:hover {
   animation: homepage-load-animation .5s ease-out;
   animation-delay: 0.3s; /* 延迟0.3s等待封面加载 */
   animation-fill-mode: both; /* both 确保动画开始前保持初始状态 */
+  visibility: visible !important; /* 动画开始后可见 */
   opacity: 1 !important;
   will-change: transform, opacity;
   content-visibility: auto !important;

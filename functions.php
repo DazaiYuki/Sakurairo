@@ -566,7 +566,7 @@ function sakura_scripts()
     add_filter('script_loader_tag', function($tag, $handle) {
         if ('polyfills' === $handle) {
             // 检查是否已经有 defer 属性
-            if (strpos($tag, 'defer') === false) {
+            if (strpos($tag, 'defer') === false && strpos($tag, ' src') !== false) {
                 return str_replace(' src', ' defer src', $tag);
             }
         }
@@ -846,6 +846,21 @@ function set_post_views()
     if (!$post_id)
         return;
 
+    // 仅统计 GET 请求，避免 POST 等非正常访问方式刷量
+    if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+        return;
+    }
+
+    // 简单的来源检查：如果有 Referer，则要求与当前主机名相同，减少跨站刷量
+    $referer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
+    if (!empty($referer)) {
+        $referer_host = parse_url($referer, PHP_URL_HOST);
+        $current_host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '';
+        if (!empty($referer_host) && !empty($current_host) && strcasecmp($referer_host, $current_host) !== 0) {
+            return;
+        }
+    }
+
     // Cookie 防刷：每篇文章使用独立的 cookie，24小时内只能 +1
     $cookie_name = 'iro_viewed_' . $post_id;
     
@@ -893,8 +908,8 @@ require_once get_template_directory() . "/inc/post_metas.php";
 
 // AJAX 接口：批量获取文章热度（用于静态缓存场景下的异步加载）
 function iro_ajax_get_post_views() {
-    // 获取文章 ID 列表
-    $post_ids = isset($_GET['ids']) ? $_GET['ids'] : '';
+    // 获取文章 ID 列表，使用 sanitize_text_field 清理输入
+    $post_ids = isset($_GET['ids']) ? sanitize_text_field($_GET['ids']) : '';
     if (empty($post_ids)) {
         wp_send_json_error('No post IDs provided');
     }
