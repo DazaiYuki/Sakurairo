@@ -359,6 +359,16 @@ body.dark .post-list-thumb {
   background: rgb(26 26 26 / 70%);
 }
 
+/* 暗色模式骨架屏占位效果 */
+body.dark .post-list-thumb:not(.post-list-show) {
+  background: linear-gradient(90deg, 
+    rgba(26,26,26,0.5) 0%, 
+    rgba(51,51,51,0.6) 50%, 
+    rgba(26,26,26,0.5) 100%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
 body.dark .post-list-thumb:hover {
   box-shadow: 0 1px 20px 0px var(--article-theme-highlight,var(--theme-skin-dark));
   background: rgb(26 26 26 / 90%);

@@ -140,10 +140,17 @@ a:hover {
 }
 /* Layout Components */
 .headertop {
-  animation: blur .8s;
+  animation: blur .8s ease-out;
   position: relative;
   overflow: hidden;
   height: 0;
+}
+
+/* 确保封面区域优先渲染 - 注意: 不包含 site-header 以避免影响移动端触摸事件 */
+.headertop,
+.pattern-center {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 100vh;
 }
 
 /* 封面滤镜层 */
@@ -194,13 +201,33 @@ a:hover {
   flex-direction: column;
   content-visibility: hidden;
   contain-intrinsic-size: auto 300px; /* 指定预留高度，减少 CLS */
+  /* GPU acceleration for smooth animations */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 .post-list-show {
-  animation: homepage-load-animation .5s;
+  /* 延迟动画开始，确保封面区域先加载完成 */
+  animation: homepage-load-animation .5s ease-out;
+  animation-delay: 0.3s; /* 延迟0.3s等待封面加载 */
+  animation-fill-mode: both; /* both 确保动画开始前保持初始状态 */
   opacity: 1 !important;
-  will-change: auto !important;
+  will-change: transform, opacity;
   content-visibility: auto !important;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+/* 骨架屏占位效果 - 慢网速时显示优雅的加载状态 */
+.post-list-thumb:not(.post-list-show) {
+  background: linear-gradient(90deg, 
+    rgba(255,255,255,0.6) 0%, 
+    rgba(255,255,255,0.8) 50%, 
+    rgba(255,255,255,0.6) 100%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
 }
 
 /* Form Elements */
@@ -3985,10 +4012,14 @@ h6::before {
 
 .headertop-down {
   position: absolute;
-  bottom: 50px;
+  bottom: calc(8vh + 20px); /* 使用 vh 单位使位置相对于屏幕高度 */
   left: calc(50% - 42px);
   z-index: 2; 
   animation: float-down 5s infinite;
+  cursor: pointer;
+  /* 确保点击事件正常工作 */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .shortcodestyle{
@@ -5751,6 +5782,12 @@ a.toc-link {
 .lazyload[style*="#lazyload-blur"] {
   -webkit-filter: saturate(.5) blur(10px);
   filter: saturate(.5) blur(10px);
+  /* GPU acceleration for smooth blur transition */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transition: filter 0.5s ease-out, -webkit-filter 0.5s ease-out;
 }
 
 .object,

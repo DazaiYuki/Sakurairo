@@ -6,6 +6,12 @@
     background: transparent;
     border-bottom: 1.5px solid transparent;
     will-change: transform;
+    /* 确保移动端导航栏的触摸事件正常工作 */
+    contain: none;
+    content-visibility: visible;
+    pointer-events: auto;
+    position: fixed;
+    z-index: 999;
   }
 
   .nav-search-wrapper,
@@ -83,6 +89,11 @@
     display: none !important;
   }
 
+
+  .headertop-down {
+    bottom: 15px;
+  }
+
   .mo-nav-button,
   .mo-toc-button {
     font-size: 16px;
@@ -92,8 +103,20 @@
     flex: 0 0 auto;
     display: flex;
     align-items: center;
+    justify-content: center;
     transition: all 0.3s ease, transform .5s cubic-bezier(0, 1.3, 0.55, 1.5);
     -webkit-transition: all 0.3s ease, transform .5s cubic-bezier(0, 1.3, 0.55, 1.5);
+    /* 移动端触摸优化 */
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    cursor: pointer;
+    /* 确保可点击区域足够大 */
+    min-height: 44px;
+    min-width: 44px;
+    /* 防止 content-visibility 影响触摸事件 */
+    contain: none;
+    position: relative;
+    z-index: 100;
   }
 
   .mobile-nav.open,
@@ -658,15 +681,37 @@
     position: relative;
   }
 
+  /* 登录用户评论框移动端布局 */
+  .cmt-submit-container.logged-in-submit {
+    padding-left: 50px;
+  }
+
+  .comment-user-avatar.logged-in-avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .comment-user-avatar.logged-in-avatar img {
+    width: 40px;
+    height: 40px;
+  }
+
+  .comment-checks.logged-in-checks {
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+
+  /* 未登录用户移动端布局 */
   .comment-checks {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-wrap: wrap;
     margin-block-start: 15px;
-    gap: 15px;
+    gap: 10px;
   }
 
   .comment-captcha {
     width: 100%;
+    margin-right: 0;
   }
 
   .comment-user-avatar {
@@ -936,5 +981,53 @@
   .tieba-container span {
     transform: scale(0.6);
     margin-block-end: -10px;
+  }
+
+  /* Mobile GPU acceleration optimization - same animation as PC with better performance */
+  .post-list-thumb {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+
+  /* Optimize lazyload images for mobile GPU */
+  .lazyload {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+
+  /* Optimize blur filter performance on mobile */
+  .lazyload[src*="#lazyload-blur"],
+  .lazyload[style*="#lazyload-blur"] {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+}
+
+/* Smooth transition for viewport changes - prevents flickering during window resize */
+@media all {
+  .post-list-thumb,
+  .post-list-show {
+    -webkit-transition: none;
+    transition: none;
+  }
+}
+
+/* Respect user preference for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .post-list-show {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+  
+  .lazyload[src*="#lazyload-blur"],
+  .lazyload[style*="#lazyload-blur"] {
+    -webkit-filter: none !important;
+    filter: none !important;
   }
 }

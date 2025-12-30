@@ -46,3 +46,5 @@
 @keyframes rotate-crown{0%{transform:rotate(-10deg);}50%{transform:rotate(10deg);}100%{transform:rotate(-10deg);}}
 @keyframes pulse-gold{0%{text-shadow:0 0 5px rgba(255,215,0,.8);}50%{text-shadow:0 0 15px rgba(255,215,0,.8),0 0 20px rgba(255,215,0,.5);}100%{text-shadow:0 0 5px rgba(255,215,0,.8);}}
 @keyframes shimmer{100%{transform:translateX(100%);}}
+@-webkit-keyframes skeleton-loading{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+@keyframes skeleton-loading{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
