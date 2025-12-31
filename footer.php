@@ -211,4 +211,52 @@ $reception_background = iro_opt('reception_background');
   <div id="particles-js"></div>
   <script type="application/json" id="particles-js-cfg"><?php echo iro_opt('particles_json', ''); ?></script>
   <?php endif; ?>
+
+<!-- 异步浏览量统计（支持静态缓存） -->
+<style>.post-views-count.views-updated{animation:viewsFlash .5s ease}</style>
+<script>
+(function() {
+  'use strict';
+  
+  function incrementAndUpdateViews() {
+    if (typeof _iro === 'undefined' || !_iro.ajax_url) return;
+    
+    // 从 DOM 获取 post ID（支持 PJAX）
+    var viewsElement = document.querySelector('.post-views-count[data-post-id]');
+    if (!viewsElement) return;
+    
+    var postId = viewsElement.getAttribute('data-post-id');
+    if (!postId || postId === '0') return;
+    
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', _iro.ajax_url, true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === 4 && xhr.status === 200) {
+        try {
+          var response = JSON.parse(xhr.responseText);
+          if (response.success && response.data) {
+            viewsElement.textContent = response.data.views + ' Views';
+            // 简单的高亮动画
+            viewsElement.classList.remove('views-updated');
+            void viewsElement.offsetWidth;
+            viewsElement.classList.add('views-updated');
+          }
+        } catch (e) {}
+      }
+    };
+    xhr.send('action=iro_increment_views&post_id=' + postId);
+  }
+  
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', incrementAndUpdateViews);
+  } else {
+    incrementAndUpdateViews();
+  }
+  
+  document.addEventListener('pjax:complete', function() {
+    setTimeout(incrementAndUpdateViews, 100);
+  });
+})();
+</script>
 </html>

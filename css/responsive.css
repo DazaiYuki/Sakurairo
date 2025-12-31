@@ -529,6 +529,15 @@
     }
   }
 
+  /* 移动端增强封面遮罩，确保文字在亮色背景下可见 */
+  .pattern-center::before {
+    background: linear-gradient(
+      rgba(0, 0, 0, 0.2),
+      rgba(0, 0, 0, 0.5)
+    );
+    backdrop-filter: saturate(120%) blur(2px);
+  }
+
   .pattern-attachment {
     height: 280px;
   }

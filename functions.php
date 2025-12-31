@@ -934,6 +934,49 @@ function iro_ajax_get_post_views() {
 add_action('wp_ajax_iro_get_views', 'iro_ajax_get_post_views');
 add_action('wp_ajax_nopriv_iro_get_views', 'iro_ajax_get_post_views');
 
+// AJAX 接口：增加文章浏览量（用于静态缓存场景）
+function iro_ajax_increment_views() {
+    // 仅接受 POST 请求
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        wp_send_json_error('Invalid request method');
+    }
+    
+    $post_id = isset($_POST['post_id']) ? intval($_POST['post_id']) : 0;
+    if (!$post_id || !get_post($post_id)) {
+        wp_send_json_error('Invalid post ID');
+    }
+    
+    // 排除管理员和编辑
+    if (current_user_can('edit_posts')) {
+        $views = get_post_views($post_id);
+        wp_send_json_success(array('views' => $views, 'incremented' => false));
+    }
+    
+    // Cookie 防刷
+    $cookie_name = 'iro_viewed_' . $post_id;
+    if (isset($_COOKIE[$cookie_name])) {
+        $views = get_post_views($post_id);
+        wp_send_json_success(array('views' => $views, 'incremented' => false));
+    }
+    
+    // 增加浏览量
+    $views = (int) get_post_meta($post_id, 'views', true);
+    $new_views = $views + 1;
+    if (!update_post_meta($post_id, 'views', $new_views)) {
+        add_post_meta($post_id, 'views', 1, true);
+        $new_views = 1;
+    }
+    
+    // 设置 cookie
+    setcookie($cookie_name, '1', time() + 86400, '/');
+    
+    // 格式化输出
+    $formatted_views = restyle_text($new_views);
+    wp_send_json_success(array('views' => $formatted_views, 'incremented' => true));
+}
+add_action('wp_ajax_iro_increment_views', 'iro_ajax_increment_views');
+add_action('wp_ajax_nopriv_iro_increment_views', 'iro_ajax_increment_views');
+
 function is_webp(): bool
 {
     return (isset($_COOKIE['su_webp']) || (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'image/webp')));

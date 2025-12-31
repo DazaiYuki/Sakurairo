@@ -71,6 +71,7 @@ function font_end_js_control()
         'site_name' => get_bloginfo('name'),
         'author_name' => iro_get_the_author_name(),
         'site_url' => site_url(),
+        'home_url' => trailingslashit(home_url()),  // 用于 PJAX 时判断是否在首页
         'land_at_home' => check(is_home()),
         'have_annotation' => check(get_post_meta(get_the_ID(), 'iro_chatgpt_annotations', true)), // 检查是否有注释
         'extract_article_highlight' => iro_opt('extract_article_highlight_from_feature', false)?true:false, // 首页卡片是否计算
@@ -97,6 +98,8 @@ function font_end_js_control()
         'missing_images' => iro_opt("missing_images_default",""),
         'dev_mode' => iro_opt('dev_mode',false) == true ? true : false ,
         'is_admin' => check(current_user_can('manage_options')),
+        'ajax_url' => admin_url('admin-ajax.php'),
+        'current_post_id' => is_singular() ? get_the_ID() : 0,
     ];
     // 判空 empty 如果变量不存在也会返回true
     if (iro_opt('random_graphs_options') == 'external_api') {

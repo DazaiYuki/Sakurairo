@@ -149,32 +149,34 @@ function get_smilies_panel() {
                         <input type="hidden" name="id" value="' . htmlspecialchars($test['id'], ENT_QUOTES, 'UTF-8') . '">
                     </label>
                 <script>
-                    let captchaHideTimeout = null;
-                    const captchaField = document.getElementById("captcha");
-                    const captchaImg = document.getElementById("captchaimg");
-                    function showCaptcha() {
-                        captchaField.setAttribute("placeholder", "");
-                        if (captchaHideTimeout) { clearTimeout(captchaHideTimeout); captchaHideTimeout = null; }
-                        captchaImg.style.width = "120px";
-                        captchaImg.style.marginRight = "10px";
-                    }
-                    function hideCaptcha() {
-                        captchaHideTimeout = setTimeout(function() {
-                            captchaImg.style.width = "0";
-                            captchaImg.style.marginRight = "0";
-                            captchaField.setAttribute("placeholder", "'. $captcha_placeholder .'");
-                        }, 5000);
-                    }
-                    function refreshCaptcha() {
-                        fetch(_iro.captcha_endpoint)
-                            .then(function(resp) { return resp.json(); })
-                            .then(function(json) {
-                                captchaImg.src = json["data"];
-                                document.querySelector("input[name=\'timestamp\']").value = json["time"];
-                                document.querySelector("input[name=\'id\']").value = json["id"];
-                            })
-                            .catch(function(error) { console.error("获取验证码失败:", error); });
-                    }
+                    (function() {
+                        var captchaHideTimeout = null;
+                        var captchaField = document.getElementById("captcha");
+                        var captchaImg = document.getElementById("captchaimg");
+                        window.showCaptcha = function() {
+                            captchaField.setAttribute("placeholder", "");
+                            if (captchaHideTimeout) { clearTimeout(captchaHideTimeout); captchaHideTimeout = null; }
+                            captchaImg.style.width = "120px";
+                            captchaImg.style.marginRight = "10px";
+                        };
+                        window.hideCaptcha = function() {
+                            captchaHideTimeout = setTimeout(function() {
+                                captchaImg.style.width = "0";
+                                captchaImg.style.marginRight = "0";
+                                captchaField.setAttribute("placeholder", "'. $captcha_placeholder .'");
+                            }, 5000);
+                        };
+                        window.refreshCaptcha = function() {
+                            fetch(_iro.captcha_endpoint)
+                                .then(function(resp) { return resp.json(); })
+                                .then(function(json) {
+                                    captchaImg.src = json["data"];
+                                    document.querySelector("input[name=\'timestamp\']").value = json["time"];
+                                    document.querySelector("input[name=\'id\']").value = json["id"];
+                                })
+                                .catch(function(error) { console.error("获取验证码失败:", error); });
+                        };
+                    })();
                 </script>';
             }
             

@@ -16,6 +16,13 @@ Text Domain: sakurairo
 Tags: AI-assisted reading, Colorful, User-friendly, Well-rounded, Feature-rich
 */
 
+/* 浏览量更新动画 */
+@keyframes viewsFlash {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; color: var(--theme-skin-matching, #fe9600); }
+  100% { opacity: 1; }
+}
+
 /* Base HTML Element Styles */
 
 * {
@@ -199,36 +206,14 @@ a:hover {
   box-shadow: 0 1px 30px -4px #e8e8e8;
   opacity: 0;
   flex-direction: column;
-  visibility: hidden; /* 初始状态隐藏，等待动画触发 */
-  contain-intrinsic-size: auto 300px; /* 指定预留高度，减少 CLS */
-  /* GPU acceleration for smooth animations */
+  contain-intrinsic-size: auto 300px;
   -webkit-transform: translateZ(0);
   transform: translateZ(0);
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
 }
 
 .post-list-show {
-  /* 延迟动画开始，确保封面区域先加载完成 */
-  animation: homepage-load-animation .5s ease-out;
-  animation-delay: 0.3s; /* 延迟0.3s等待封面加载 */
-  animation-fill-mode: both; /* both 确保动画开始前保持初始状态 */
-  visibility: visible !important; /* 动画开始后可见 */
-  opacity: 1 !important;
-  will-change: transform, opacity;
-  content-visibility: auto !important;
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
-}
-
-/* 骨架屏占位效果 - 慢网速时显示优雅的加载状态 */
-.post-list-thumb:not(.post-list-show) {
-  background: linear-gradient(90deg, 
-    rgba(255,255,255,0.6) 0%, 
-    rgba(255,255,255,0.8) 50%, 
-    rgba(255,255,255,0.6) 100%);
-  background-size: 200% 100%;
-  animation: skeleton-loading 1.5s ease-in-out infinite;
+  animation: homepage-load-animation .5s ease-out forwards;
+  opacity: 1;
 }
 
 /* Form Elements */
@@ -412,20 +397,6 @@ blockquote:after {
   font-weight: var(--global-font-weight);
 }
 
-.pattern-center::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background:linear-gradient( 
-    #fff0, 
-    #00000080
-  );
-  backdrop-filter: saturate(150%) blur(1px);
-}
-
 .pattern-attachment.bg {
   background-repeat: no-repeat;
   background-size: cover;
@@ -465,6 +436,7 @@ blockquote:after {
   margin: auto;
   padding: 0;
   border: 0;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
 .pattern-center header.single-header {
@@ -483,6 +455,7 @@ blockquote:after {
   font-size: 32px;
   width: 100%;
   font-weight: var(--global-font-weight);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
 }
 
 .single-center .entry-census {
@@ -492,6 +465,7 @@ blockquote:after {
   line-height: 30px;
   font-weight: var(--global-font-weight);
   width: 100%;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
 }
 
 .single-center .entry-census i{
@@ -4580,6 +4554,19 @@ textarea:focus {
 .pattern-attachment {
   width: 100%;
   height: 400px;
+  position: relative;
+}
+
+.pattern-attachment::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(#fff0, #00000080);
+  backdrop-filter: saturate(150%) blur(1px);
+  pointer-events: none;
 }
 
 .pattern-center .cat-des {

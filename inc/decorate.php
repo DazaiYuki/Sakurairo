@@ -264,11 +264,13 @@ $exter_font = iro_opt('exter_font');
 @font-face {
 font-family: '<?php echo $exter_font['font1']; ?>';
 src : url('<?php echo $exter_font['link1']; ?>');
+font-display: swap;
 }
 
 @font-face {
 font-family: '<?php echo $exter_font['font2']; ?>';
 src : url('<?php echo $exter_font['link2']; ?>');
+font-display: swap;
 }
 
 <?php } ?>
