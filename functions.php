@@ -542,8 +542,12 @@ function sakura_scripts()
             $index = 'index.php';
         }
         $iro_css = $core_lib_basepath . '/css/' . $index . '?' . $sakura_header . '&' . $content_style . '&' . $wave . '&minify&' . IRO_VERSION;
-        add_action('wp_head', function() use ($iro_css) {
-            echo '<link rel="preload" href="' .$iro_css. '" as="style" onload="this.onload=null;this.rel=\'stylesheet\'">';
+        // 只输出一条阻塞式样式表。
+        // 原先还额外输出一条 rel=preload as=style（带 onload 转 stylesheet），
+        // 意图是让 CSS 异步加载；但紧接着的阻塞式样式表会把渲染重新卡住，
+        // 异步意图被完全抵消，那条 preload 只是重复声明（同一 URL 会被重复应用）。
+        // 此处保留阻塞式加载以维持原有渲染时序（异步化会引入 FOUC，属视觉变更）。
+        add_action('wp_head', function () use ($iro_css) {
             echo '<link rel="stylesheet" href="' . $iro_css . '">';
         }, 9);
 
