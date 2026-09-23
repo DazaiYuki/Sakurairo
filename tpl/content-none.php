@@ -33,7 +33,12 @@
 				$title = $post->post_title;
 				?>
 				<li><a href="<?php echo esc_url(get_permalink($postid)); ?>" title="<?php echo esc_attr($title); ?>"><?php echo esc_html($title); ?></a> </li>
-				<?php } ?>
+				<?php } 
+				// 必须复位：setup_postdata() 会改写全局 $post，
+				// 不复位的话，本模板之后的代码（search.php 后续部分、footer.php、侧边栏、
+				// 以及依赖全局 $post 的插件）读到的都会是循环里最后一个文章。
+				wp_reset_postdata();
+				?>
 			</ul>
 			</div>
 			</div>
