@@ -233,6 +233,27 @@ if (!function_exists('akina_setup')) {
 ;
 add_action('after_setup_theme', 'akina_setup');
 
+/**
+ * 发送 X-Frame-Options 响应头（防点击劫持）
+ *
+ * 原先写在 header.php:44 模板顶层 —— 位置太晚：只要输出已经开始
+ * （调试提示、插件提前输出、文件 BOM、结尾多余空行等），响应头就会被锁定，
+ * header() 静默失败，防护随之失效且不报错。
+ *
+ * 移到 send_headers 钩子，确保在任何输出之前发送。
+ * 与 header.php 原行为保持一致：仅作用于前台。
+ */
+function iro_send_security_headers()
+{
+    if (is_admin()) {
+        return;
+    }
+    if (!headers_sent()) {
+        header('X-Frame-Options: SAMEORIGIN');
+    }
+}
+add_action('send_headers', 'iro_send_security_headers');
+
 function i18n_templates_name ($translated_name, $original_name) {
     $lang = get_user_locale();
 
