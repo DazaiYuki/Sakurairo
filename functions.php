@@ -633,6 +633,8 @@ function sakura_scripts()
 }
 add_action('wp_enqueue_scripts', 'sakura_scripts');
 
+// 关闭区块资源按需加载。
+// 这几个都是 filter，注册时机不影响结果，保留在 after_setup_theme 即可。
 add_action("after_setup_theme",function(){
     if(iro_opt("poi_pjax",true)==true){
         // 禁用wp6.9按需加载
@@ -640,14 +642,30 @@ add_action("after_setup_theme",function(){
         add_filter( 'should_load_separate_core_block_assets', '__return_false', 1 );
         add_filter( 'should_load_block_assets_on_demand', '__return_false', 1 );
         add_filter( 'enqueue_empty_block_content_assets', '__return_true' );
-
-        // 全量加载wordpress区块和原生组件样式
-        wp_enqueue_style( 'wp-block-library' );
-        wp_enqueue_style( 'wp-block-library-theme' );
-        wp_enqueue_style( 'wp-block-library-comments' );
-        wp_enqueue_style( 'wp-block-library-widgets' );
     }
 });
+
+/**
+ * 全量加载 WordPress 区块与原生组件样式。
+ *
+ * 原先这几条 wp_enqueue_style 直接写在 after_setup_theme 里，被 WordPress 判定为用法错误
+ * —— 样式必须在 wp_enqueue_scripts / admin_enqueue_scripts / login_enqueue_scripts
+ * 之中注册，否则每次请求都会产生 4 条 Notice（wp-block-library 及 theme / comments / widgets）。
+ *
+ * 这里挂到 wp_enqueue_scripts 的优先级 5，早于主题自身的 sakura_scripts（优先级 10），
+ * 目的是让这些样式表在最终输出里的先后顺序与改动前保持一致，不改变层叠关系。
+ */
+add_action('wp_enqueue_scripts', function () {
+    if (iro_opt("poi_pjax", true) != true) {
+        return;
+    }
+
+    // 全量加载wordpress区块和原生组件样式
+    wp_enqueue_style( 'wp-block-library' );
+    wp_enqueue_style( 'wp-block-library-theme' );
+    wp_enqueue_style( 'wp-block-library-comments' );
+    wp_enqueue_style( 'wp-block-library-widgets' );
+}, 5);
 
 /**
  * load .php.
