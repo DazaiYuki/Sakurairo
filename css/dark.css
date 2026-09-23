@@ -35,7 +35,7 @@ body.dark .comments {
 }
 
 body.dark a:hover{
-  color: var(--theme-skin-dark) !important;;
+  color: var(--theme-skin-dark) !important;
 }
 
 /* 输入框相关样式 */
@@ -89,7 +89,7 @@ body.dark .showcard .img {
 }
 
 body.dark .showcard .img:hover {
-  box-shadow: 0 1px 30px -2px var(--dark-shadow-hover);;
+  box-shadow: 0 1px 30px -2px var(--dark-shadow-hover);
   opacity: 1;
 }
 
@@ -99,11 +99,11 @@ body.dark .showcard .icon-title {
 
 body.dark .showcard-button {
   box-shadow: 0 1px 20px 2px var(--dark-bg-hover);
-  background: var(--dark-bg-secondary);;
+  background: var(--dark-bg-secondary);
 }
 
 body.dark .showcard-button.hover {
-  box-shadow: 0 1px 30px -2px var(--dark-shadow-hover);;
+  box-shadow: 0 1px 30px -2px var(--dark-shadow-hover);
   background: var(--dark-bg-hover);
 }
 
@@ -521,7 +521,7 @@ body.dark pre.wp-block-code {
 }
 
 body.dark .shuoshuo-item {
-  box-shadow: 0 1px 35px -8px var(--dark-bg-secondary);;
+  box-shadow: 0 1px 35px -8px var(--dark-bg-secondary);
   background: rgb(26 26 26 / 60%);
   border: 1px solid var(--dark-border-color);
 }
