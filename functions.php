@@ -663,10 +663,11 @@ add_action("after_setup_theme",function(){
 add_action('wp_enqueue_scripts', function () {
     if (iro_opt("poi_pjax", true) == true) {
         // PJAX 模式：全量加载区块样式（行为与改动前一致）
+        // 注：wp-block-library-comments / wp-block-library-widgets 两个 handle
+        // 在 WP 7.1.2 中已不存在（样式并入主文件），enqueue 它们是静默空操作，
+        // 故不再注册。详见 docs/refactor/12-兼容性审计.md
         wp_enqueue_style( 'wp-block-library' );
         wp_enqueue_style( 'wp-block-library-theme' );
-        wp_enqueue_style( 'wp-block-library-comments' );
-        wp_enqueue_style( 'wp-block-library-widgets' );
         return;
     }
 
