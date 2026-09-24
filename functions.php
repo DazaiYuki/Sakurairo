@@ -2268,6 +2268,45 @@ if (iro_opt('iro_seo','on') != 'off') {
     }
 }
 
+/**
+ * 窗口尺寸变化期间收窄过渡属性，消除断点切换时的整页闪动。
+ *
+ * 背景：主题内有 74 条组件级 transition: all，断点切换时大量元素同时改布局，
+ * 这些变化被过渡动画化，整页出现约 0.9 秒的「样式错乱再恢复」。
+ *
+ * 此处只在拖动窗口期间给 <html> 挂上 iro-resizing，
+ * 配合 style.css 中 html.iro-resizing * 的规则强制收窄可过渡属性；
+ * 停止拖动 300ms 后移除。日常动效（含移动端抽屉的 max-height 展开）不受影响。
+ *
+ * 详见 docs/refactor/08-断点切换闪烁修复.md
+ */
+add_action('wp_footer', function () {
+    ?>
+<script>
+(function () {
+    var root = document.documentElement;
+    var timer = null;
+
+    function mark() {
+        root.classList.add('iro-resizing');
+        clearTimeout(timer);
+        // 保持 1.2s：主题内最长的过渡是 1s（nav ul li、.site-footer），留 200ms 余量。
+        //
+        // 曾尝试「检测页面尺寸稳定后提前撤下」，但失败了：header 高度固定，
+        // 导航内部的布局变化不影响整页高度，会被误判为已稳定。
+        // 实测 1200→880 时会因此漏掉 414ms 的导航错位。
+        timer = setTimeout(function () {
+            root.classList.remove('iro-resizing');
+        }, 1200);
+    }
+
+    window.addEventListener('resize', mark, { passive: true });
+    window.addEventListener('orientationchange', mark, { passive: true });
+})();
+</script>
+    <?php
+}, 99);
+
 function iro_get_keywords(){
     global $post;
     $keywords = '';

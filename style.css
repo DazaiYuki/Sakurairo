@@ -18,9 +18,58 @@ Tags: AI-assisted reading, Colorful, User-friendly, Well-rounded, Feature-rich
 
 /* Base HTML Element Styles */
 
+/*
+ * 全局过渡
+ *
+ * 原先为 transition: all —— 让每个元素的所有属性都参与过渡，带来两个问题：
+ *   1. 调整窗口跨过响应式断点时，布局属性的变化被动画化，
+ *      整页会出现约 0.9 秒的「样式错乱再恢复」（实测见 docs/refactor/08）
+ *   2. 性能开销：为所有元素的所有属性建立过渡追踪
+ *
+ * 现收窄为「不触发重排」的属性。经全量核对，主题内 151 条依赖此处兜底的
+ * :hover 规则，其改动属性 100% 落在下列范围内（box-shadow 61 / color 56 /
+ * background 54 / transform 23 / opacity 21 / background-color 20 /
+ * border-color 3 / filter 1 / fill 1），故 hover 动效全部保留，无一丢失。
+ *
+ * 布局属性（width / height / margin / padding / top / left / font-size 等）
+ * 刻意不在列表内 —— 这正是断点切换不再闪动的原因。
+ * 确需布局过渡的组件，请在其自身规则中单独声明 transition：
+ * 组件选择器优先级高于此处的通配符，会正常覆盖，不受影响。
+ */
 * {
-  transition: all 0.4s cubic-bezier(0.07, 0.53, 0.65, 0.95);
-  -webkit-transition: all 0.4s cubic-bezier(0.07, 0.53, 0.65, 0.95);
+  transition:
+    color 0.4s cubic-bezier(0.07, 0.53, 0.65, 0.95),
+    background 0.4s cubic-bezier(0.07, 0.53, 0.65, 0.95),
+    background-color 0.4s cubic-bezier(0.07, 0.53, 0.65, 0.95),
+    border-color 0.4s cubic-bezier(0.07, 0.53, 0.65, 0.95),
+    outline-color 0.4s cubic-bezier(0.07, 0.53, 0.65, 0.95),
+    box-shadow 0.4s cubic-bezier(0.07, 0.53, 0.65, 0.95),
+    opacity 0.4s cubic-bezier(0.07, 0.53, 0.65, 0.95),
+    transform 0.4s cubic-bezier(0.07, 0.53, 0.65, 0.95),
+    filter 0.4s cubic-bezier(0.07, 0.53, 0.65, 0.95),
+    fill 0.4s cubic-bezier(0.07, 0.53, 0.65, 0.95),
+    stroke 0.4s cubic-bezier(0.07, 0.53, 0.65, 0.95);
+}
+
+/*
+ * 窗口尺寸变化期间：禁用过渡
+ *
+ * 主题内另有 74 条组件级 `transition: all`（style.css 55 / responsive 8 /
+ * sakura_header 6 / dark 5），它们的优先级高于上面的通配符。断点切换时
+ * 大量元素同时改变布局，整页出现约 0.9 秒的「错乱再恢复」
+ * （实测 928ms，见 docs/refactor/08）。
+ *
+ * 这里不做全局改写 —— 那会让移动端抽屉、折叠面板的 max-height 展开动画
+ * 一起失效。改为只在拖动窗口期间禁用，由 iro-transition-guard 在 resize 时
+ * 挂上 `iro-resizing`，停止拖动 1.2 秒后移除。
+ *
+ * 为什么不只排除布局属性、而保留 transform / opacity：
+ *   实测发现导航栏的位置调整正是靠 transform 完成的，
+ *   只排除布局属性时它仍会做 0.4 秒动画（残留 422ms 错位）。
+ *   resize 期间用户不可能做 hover 之类的交互，因此全部禁用没有副作用。
+ */
+html.iro-resizing * {
+  transition: none !important;
 }
 
 i,i:hover{
