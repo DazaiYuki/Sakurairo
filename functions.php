@@ -633,20 +633,25 @@ function sakura_scripts()
 }
 add_action('wp_enqueue_scripts', 'sakura_scripts');
 
-// 关闭区块资源按需加载。
+// 区块资源按需加载的开关。
 // 这几个都是 filter，注册时机不影响结果，保留在 after_setup_theme 即可。
 add_action("after_setup_theme",function(){
     if(iro_opt("poi_pjax",true)==true){
-        // 禁用wp6.9按需加载
+        // PJAX 模式：关闭按需加载。
+        // AJAX 切页时服务端预知不到目标页会用哪些区块，只能全量加载才不会缺样式。
         add_filter( 'wp_should_load_separate_core_block_assets', '__return_false' );
         add_filter( 'should_load_separate_core_block_assets', '__return_false', 1 );
         add_filter( 'should_load_block_assets_on_demand', '__return_false', 1 );
         add_filter( 'enqueue_empty_block_content_assets', '__return_true' );
+    } else {
+        // 非 PJAX：开启按需加载（WP 核心默认即为 true，此处显式声明以防被其它插件改掉）。
+        // 详见 docs/refactor/09-区块样式加载机制与PJAX边界检查.md
+        add_filter( 'wp_should_load_separate_core_block_assets', '__return_true' );
     }
 });
 
 /**
- * 全量加载 WordPress 区块与原生组件样式。
+ * 加载 WordPress 区块与原生组件样式。
  *
  * 原先这几条 wp_enqueue_style 直接写在 after_setup_theme 里，被 WordPress 判定为用法错误
  * —— 样式必须在 wp_enqueue_scripts / admin_enqueue_scripts / login_enqueue_scripts
@@ -656,15 +661,30 @@ add_action("after_setup_theme",function(){
  * 目的是让这些样式表在最终输出里的先后顺序与改动前保持一致，不改变层叠关系。
  */
 add_action('wp_enqueue_scripts', function () {
-    if (iro_opt("poi_pjax", true) != true) {
+    if (iro_opt("poi_pjax", true) == true) {
+        // PJAX 模式：全量加载区块样式（行为与改动前一致）
+        wp_enqueue_style( 'wp-block-library' );
+        wp_enqueue_style( 'wp-block-library-theme' );
+        wp_enqueue_style( 'wp-block-library-comments' );
+        wp_enqueue_style( 'wp-block-library-widgets' );
         return;
     }
 
-    // 全量加载wordpress区块和原生组件样式
-    wp_enqueue_style( 'wp-block-library' );
+    /*
+     * 非 PJAX 模式：区块样式走按需加载（省下 137 KB 的合并样式库），
+     * 但必须单独补上 theme.css —— 这一条很容易漏。
+     *
+     * WP 核心只在下面这个条件下加载 theme.css：
+     *     current_theme_supports('wp-block-styles') && ! wp_should_load_separate_core_block_assets()
+     * 按需模式下后半段不成立，而按需机制只处理 style.css，不涉及 theme.css。
+     *
+     * 而引用块左侧的竖线边框（border-left: .25em solid）恰好只存在于
+     * blocks/{name}/theme.min.css 里 —— 不补的话正文引用块的竖线会消失。
+     * 这个文件只有 2.7 KB（对比合并的 style.min.css 是 137 KB）。
+     *
+     * 见 docs/refactor/09-区块样式加载机制与PJAX边界检查.md
+     */
     wp_enqueue_style( 'wp-block-library-theme' );
-    wp_enqueue_style( 'wp-block-library-comments' );
-    wp_enqueue_style( 'wp-block-library-widgets' );
 }, 5);
 
 /**

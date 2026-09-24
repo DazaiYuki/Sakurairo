@@ -1,9 +1,9 @@
-# 09 · WordPress 区块样式加载机制 与 PJAX 边界检查
+# 09 · WordPress 区块样式加载机制 与 PJAX 边界修复
 
 > 检查日期：2026-09-24
 > 触发问题：用户要求"细说 WP 按需加载"，并明确"PJAX 不管开不开都不要有错误"
-> 结论：**发现一个真实缺陷 —— PJAX 关闭时，引用块左边框等"区块设计样式"会丢失**
-> 本轮只做检查，未改动任何代码
+> 结论：**发现并修复了一个真实缺陷 —— PJAX 关闭时引用块左边框等"区块设计样式"会丢失**
+> 同时查清了此前文档 07 的一处归因错误
 
 ---
 
@@ -195,44 +195,96 @@ PJAX 关：无 style.min.css 链接
 
 ---
 
-## 六、建议方案（待确认后再动）
+## 六、实施方案（已落地）
 
-**目标**：PJAX 开/关都正确，且不开 PJAX 时能省下那 137 KB。
+**目标**：PJAX 开/关都正确，且不开 PJAX 时省下那 137 KB。
 
 ```php
+// functions.php → after_setup_theme
 if ( iro_opt( 'poi_pjax', true ) ) {
     // PJAX：AJAX 切页预知不到目标页的区块，保持全量加载
     add_filter( 'wp_should_load_separate_core_block_assets', '__return_false' );
+    add_filter( 'should_load_separate_core_block_assets', '__return_false', 1 );
+    add_filter( 'should_load_block_assets_on_demand', '__return_false', 1 );
+    add_filter( 'enqueue_empty_block_content_assets', '__return_true' );
+} else {
+    // 非 PJAX：显式开启按需加载（核心默认即为 true，写明以防被其它插件改掉）
+    add_filter( 'wp_should_load_separate_core_block_assets', '__return_true' );
+}
+
+// functions.php → wp_enqueue_scripts（优先级 5）
+if ( iro_opt( 'poi_pjax', true ) == true ) {
     wp_enqueue_style( 'wp-block-library' );
     wp_enqueue_style( 'wp-block-library-theme' );
     wp_enqueue_style( 'wp-block-library-comments' );
     wp_enqueue_style( 'wp-block-library-widgets' );
-} else {
-    // 无 PJAX：按需加载（省 137 KB）+ 单独补 theme.css（2.7 KB，保住边框）
-    add_filter( 'wp_should_load_separate_core_block_assets', '__return_true' );
-    wp_enqueue_style( 'wp-block-library-theme' );
+    return;
 }
+// 非 PJAX：区块样式按需加载，但必须单独补 theme.css（2.7 KB，保住引用块边框）
+wp_enqueue_style( 'wp-block-library-theme' );
 ```
 
-**收益与代价**：
+### 关键点
 
-| | 现状（PJAX 关） | 建议方案（PJAX 关） |
-| --- | --- | --- |
-| style.css | 按需内联 | 按需内联（不变） |
-| theme.css | ❌ 缺失 | ✅ 2.7 KB |
-| 引用块边框 | 丢失 | 保留 |
-| 体积 | — | 多 2.7 KB，但边框回来了 |
-
-**关于 PJAX 开启时是否也能优化**：
-理论上可在 PJAX 的 AJAX 响应里带上目标页的区块样式，但那要改 PJAX 的加载逻辑，
-且要处理样式去重与注入时机，属结构改动，**建议先不动**。
+**必须保留 `wp-block-library-theme`**，这是整个改动里唯一容易漏、后果又明显的一步。
+它提供的不只是那条竖线 —— `theme.css` 里还有 `margin: 0 0 1.75em`、`padding-left: 1em`，
+**缺失会连带改变布局**：实测文章页高度会差 **12 px**（桌面）/ **24 px**（移动）。
 
 ---
 
-## 七、待确认
+## 七、验证结果
 
-1. 是否按 §六 实施（先修好 PJAX 关时的样式缺失）？
-2. PJAX 开启时，是否也想省那 137 KB？（需要改 PJAX 逻辑，风险更高）
-3. 主题是否应当补声明 `add_theme_support('wp-block-styles')`？
-   补了以后 WP 会在非按需模式下自动加载 theme.css，主题那 4 条 enqueue 可以简化。
-   但要确认不会引入重复加载。
+### 7.1 PJAX 开启：行为完全不变
+
+| 检查项 | 结果 |
+| --- | --- |
+| `block-library/style.min.css` | ✅ 仍加载 |
+| `wp-block-library-theme` | ✅ 仍加载 |
+| PHP 日志 | 0 条 |
+
+### 7.2 PJAX 关闭：样式完整且省体积
+
+| 检查项 | 改动前 | 改动后 |
+| --- | --- | --- |
+| `block-library/style.min.css` | 加载（按需模式下本应不加载） | ✅ **不加载** |
+| `theme.css` | ❌ 缺失 | ✅ 加载（内联 `wp-block-library-theme`） |
+| `border-left:.25em solid` | ❌ 无 | ✅ 有 |
+
+**体积对照（文章页，本地实测）：**
+
+| | 外链 CSS | 内联 CSS | 总计 |
+| --- | --- | --- | --- |
+| PJAX 开（全量） | 362.6 KB | 18.6 KB | **381.2 KB** |
+| PJAX 关（按需 + theme） | 225.0 KB | 24.8 KB | **249.8 KB** |
+| **差值** | **−137.5 KB** | +6.2 KB | **−131.4 KB（−34.5%）** |
+
+### 7.3 视觉回归
+
+**PJAX 关 vs 基准（PJAX 开）：27/28 完全一致。**
+
+唯一那张 `07-search-empty` 经查为**采集抖动**，与本次改动无关：
+
+- 单页重复采集 5 次，两两对比**全部一致**
+- 该页面排在采集顺序最后（第 7 个），连续采集时会受前序页面状态影响
+- 两次完整采集各出现 1 张，且配色随机漂移（一次 light、一次 dark），符合抖动特征
+
+> 这是视觉回归工具自身的已知局限，记录在 `env/tools/README.md`。
+> 判断方法：出现 1 张差异时先重采，位置随机漂移即为噪声。
+
+**引用块边框已截图确认恢复。**
+
+### 7.4 日常动效
+
+未改动任何组件级规则，hover / 抽屉 / 折叠面板动效保持原样。
+
+---
+
+## 八、后续可选项（未做）
+
+1. **PJAX 开启时能否也省这 137 KB？**
+   需要在 PJAX 的 AJAX 响应里带上目标页的区块样式，并处理去重与注入时机。
+   属结构改动，风险高一档，本轮不做。
+
+2. **是否补声明 `add_theme_support('wp-block-styles')`？**
+   补了以后 WP 会在非按需模式下自动 enqueue `theme.css`，主题那 4 条可以简化。
+   但要先确认与主题现有显式 enqueue 不会重复。
