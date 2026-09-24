@@ -1,0 +1,59 @@
+name: Build Theme Package
+
+# 推送到 relive 时自动打包可安装的 WordPress 主题 zip，
+# 并更新到固定的 pre-release，供生产环境测试直接下载。
+on:
+  push:
+    branches: [relive]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Package theme
+        run: |
+          # WP 主题包 = 顶层目录为 Sakurairo/ 的 zip。
+          # 用 git archive 保证只包含已提交文件，再剔除开发文件与 source map。
+          mkdir -p /tmp/stage dist
+          git archive --format=tar --prefix=Sakurairo/ HEAD | tar -x -C /tmp/stage
+          rm -rf /tmp/stage/Sakurairo/.github \
+                 /tmp/stage/Sakurairo/.gitignore \
+                 /tmp/stage/Sakurairo/.gitattributes \
+                 /tmp/stage/Sakurairo/docs \
+                 /tmp/stage/Sakurairo/README.md \
+                 /tmp/stage/Sakurairo/README_en.md \
+                 /tmp/stage/Sakurairo/README_ja.md \
+                 /tmp/stage/Sakurairo/README_tw.md
+          find /tmp/stage/Sakurairo -name '*.map' -delete
+          cd /tmp/stage && zip -qr Sakurairo-relive.zip Sakurairo
+          mv /tmp/stage/Sakurairo-relive.zip "${GITHUB_WORKSPACE}/dist/"
+
+      - name: Upload artifact (需登录 GitHub 下载)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sakurairo-relive
+          path: dist/Sakurairo-relive.zip
+
+      - name: Update pre-release (公开直链下载)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: relive-build
+          name: "Relive 自动构建（随每次 push 更新）"
+          body: |
+            relive 分支的最新自动构建，用于生产环境测试。
+
+            - 下载 `Sakurairo-relive.zip`，在 WP 后台「主题 → 添加 → 上传主题」安装
+            - **注意：与现有 Sakurairo 主题同名**，若生产环境已启用原主题，
+              需先停用/删除原主题，或手动改 zip 内目录名（如 `Sakurairo-relive`，
+              同时改 style.css 里的 `Theme Name`）后再安装，即可并存测试
+            - 构建选项数据（iro_options）存于数据库，与原主题共用
+            - 每次 push 到 relive 分支都会自动覆盖此 release
+          prerelease: true
+          files: dist/Sakurairo-relive.zip

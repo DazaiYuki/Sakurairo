@@ -2635,7 +2635,6 @@ if (iro_opt('sakura_widget')) {
  */
 function markdown_parser($incoming_comment)
 {
-    global $wpdb, $comment_markdown_content;
     global $allowedtags;
 
     /** 
@@ -2692,29 +2691,10 @@ function markdown_parser($incoming_comment)
         $incoming_comment['comment_content'] = htmlspecialchars($incoming_comment['comment_content'], ENT_QUOTES, 'UTF-8'); //未启用markdown直接转义
     }
 
-    // $column_names = $wpdb->get_row("SELECT * FROM information_schema.columns where 
-    // table_name='$wpdb->comments' and column_name = 'comment_markdown' LIMIT 1");
-    // //Add column if not present.
-    // if (!isset($column_names)) {
-    //     $wpdb->query("ALTER TABLE $wpdb->comments ADD comment_markdown text");
-    // }
-    $comment_markdown_content = $incoming_comment['comment_content'];
-
     return $incoming_comment;
 }
 add_filter('preprocess_comment', 'markdown_parser');
 remove_filter('comment_text', 'make_clickable', 9);
-
-// //保存Markdown评论
-// function save_markdown_comment($comment_ID, $comment_approved)
-// {
-//     global $wpdb, $comment_markdown_content;
-//     $comment = get_comment($comment_ID);
-//     $comment_content = $comment_markdown_content;
-//     //store markdow content
-//     $wpdb->query("UPDATE $wpdb->comments SET comment_markdown='" . $comment_content . "' WHERE comment_ID='" . $comment_ID . "';");
-// }
-// add_action('comment_post', 'save_markdown_comment', 10, 2);
 
 //打开评论HTML标签限制
 function allow_more_tag_in_comment()
@@ -2759,23 +2739,6 @@ add_action('init', 'allow_more_tag_in_comment');
 // 移除wp核心内置的两阶段评论过滤
 remove_filter('pre_comment_content', 'wp_filter_kses');
 remove_filter('comment_save_pre', 'wp_filter_kses');
-
-/**
- * 检查数据库是否支持MyISAM引擎
- */
-function check_myisam_support()
-{
-    global $wpdb;
-    $results = $wpdb->get_results("SHOW ENGINES");
-    if (!$results)
-        return false;
-    foreach ($results as $result) {
-        if ($result->Engine == "MyISAM") {
-            return $result->Support == "YES";
-        }
-    }
-    return false;
-}
 
 //rest api支持
 function permalink_tip()
